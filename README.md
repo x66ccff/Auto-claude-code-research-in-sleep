@@ -71,14 +71,6 @@ claude
 
 ---
 
-## 阿里云百炼 OpenAI 兼容接口
-
-百炼控制台：
-
-```text
-https://bailian.console.aliyun.com/
-```
-
 如果使用百炼 OpenAI 兼容接口作为 reviewer，例如 `glm-5`，建议使用 Codex `0.80.0`，因为它支持 Chat/Completions API。
 
 ### 安装旧版 Codex
@@ -88,63 +80,6 @@ npm install -g @openai/codex@0.80.0
 codex --version
 ```
 
-### 配置 API Key
-
-```bash
-export OPENAI_API_KEY="your-bailian-api-key"
-```
-
-写入 bash：
-
-```bash
-echo 'export OPENAI_API_KEY="your-bailian-api-key"' >> ~/.bashrc
-source ~/.bashrc
-```
-
-写入 zsh：
-
-```bash
-echo 'export OPENAI_API_KEY="your-bailian-api-key"' >> ~/.zshrc
-source ~/.zshrc
-```
-
-### 配置 `~/.codex/config.toml`
-
-```bash
-mkdir -p ~/.codex
-vim ~/.codex/config.toml
-```
-
-写入：
-
-```toml
-model_provider = "Model_Studio_Token_Plan"
-model = "glm-5.1"
-
-[model_providers.Model_Studio_Token_Plan]
-name = "Model_Studio_Token_Plan"
-base_url = "https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
-env_key = "OPENAI_API_KEY"
-wire_api = "chat"
-```
-
-测试：
-
-```bash
-codex exec "用一句话说明你是什么模型"
-```
-
-接入 Claude Code：
-
-```bash
-claude mcp add codex -s user -- codex mcp-server
-```
-
-Claude Code 内测试：
-
-```text
-/research-review "README.md"
-```
 
 ### 禁止 Codex 自动更新
 
