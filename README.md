@@ -218,6 +218,40 @@ fi
 
 ```
 
+### 在任何仓库下初始化codex（安装后可输入initcodex）
+
+```bash
+mkdir -p ~/bin
+cat > ~/bin/initcodex <<'SCRIPT'
+#!/usr/bin/env bash
+set -euo pipefail
+TARGET_DIR="${1:-$(pwd)}"
+CODEX_DIR="${TARGET_DIR}/.codex"
+CONFIG_FILE="${CODEX_DIR}/config.toml"
+mkdir -p "${CODEX_DIR}"
+if [[ -f "${CONFIG_FILE}" ]]; then
+    BACKUP="${CONFIG_FILE}.bak.$(date +%Y%m%d%H%M%S)"
+    cp "${CONFIG_FILE}" "${BACKUP}"
+    echo "[initcodex] 已备份旧文件至: ${BACKUP}"
+fi
+cat > "${CONFIG_FILE}" <<'EOF'
+model_provider = "Model_Studio_Token_Plan"
+# model = "kimi-k2.6"
+model = "glm-5.1"
+[model_providers.Model_Studio_Token_Plan]
+name = "Model_Studio_Token_Plan"
+base_url = "https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
+env_key = "OPENAI_API_KEY"
+wire_api = "chat"
+EOF
+echo "[initcodex] 已创建: ${CONFIG_FILE}"
+SCRIPT
+chmod +x ~/bin/initcodex
+# 若 ~/bin 不在 PATH,追加一次即可
+grep -q 'HOME/bin' ~/.bashrc || echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
 ---
 
 ## 查文献
