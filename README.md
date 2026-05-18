@@ -1,6 +1,4 @@
-下面这版按你给的风格重写了：短说明 + 安装 + 配置 + 大量可复制命令。
 
-````markdown
 # ARIS
 
 ARIS 是一组可安装到 Claude Code / Codex / Cursor 等 agent 工具里的科研工作流 skills。
