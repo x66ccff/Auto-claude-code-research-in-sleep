@@ -119,7 +119,7 @@ vim ~/.codex/config.toml
 
 ```toml
 model_provider = "Model_Studio_Token_Plan"
-model = "glm-5"
+model = "glm-5.1"
 
 [model_providers.Model_Studio_Token_Plan]
 name = "Model_Studio_Token_Plan"
@@ -178,6 +178,45 @@ sudo chown -R root:root /home/tiger/miniforge3/lib/node_modules/@openai/codex
 ```bash
 sudo chown -R "$USER":"$USER" "$(npm root -g)/@openai/codex"
 npm install -g @openai/codex@0.80.0
+```
+
+### 全换成glm5.1
+
+```bash
+#!/bin/bash
+
+# 脚本：将 skills 文件夹中的所有 gpt-5.x 模型名称替换为 glm-5.1
+
+SKILLS_DIR="/home/tiger/.claude/skills"
+
+# 定义替换规则：将 glm-5.1, glm-5.1, glm-5.1, glm-5.1, glm-5.1, glm-5.1 等替换为 glm-5.1
+# 使用 sed 进行替换
+
+echo "开始替换 gpt-5.x 模型名称为 glm-5.1..."
+echo ""
+
+# 查找所有包含 gpt-5.x 的文件并进行替换
+find "$SKILLS_DIR" -type f \( -name "*.md" -o -name "*.py" -o -name "*.json" -o -name "*.yaml" -o -name "*.yml" -o -name "*.sh" -o -name "*.txt" \) | while read -r file; do
+    # 检查文件是否包含 gpt-5.x 模式
+    if grep -qE 'gpt-5\.[0-9]+' "$file" 2>/dev/null; then
+        echo "处理文件: $file"
+        # 使用 sed 替换 gpt-5.x 为 glm-5.1 (支持 glm-5.1, glm-5.1, glm-5.1, glm-5.1, glm-5.1, glm-5.1 等)
+        sed -i -E 's/gpt-5\.[0-9]+/glm-5.1/g' "$file"
+    fi
+done
+
+echo ""
+echo "替换完成！"
+echo ""
+echo "验证替换结果（搜索剩余的 gpt-5.x）:"
+remaining=$(grep -rE 'gpt-5\.[0-9]+' "$SKILLS_DIR" 2>/dev/null | wc -l)
+if [ "$remaining" -eq 0 ]; then
+    echo "✓ 所有 gpt-5.x 模型名称已成功替换为 glm-5.1"
+else
+    echo "✗ 还有 $remaining 处 gpt-5.x 未替换:"
+    grep -rE 'gpt-5\.[0-9]+' "$SKILLS_DIR" 2>/dev/null
+fi
+
 ```
 
 ---
