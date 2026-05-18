@@ -185,37 +185,36 @@ npm install -g @openai/codex@0.80.0
 ```bash
 #!/bin/bash
 
-# 脚本：将 skills 文件夹中的所有 gpt-5.x 模型名称替换为 glm-5.1
+# 脚本：将 skills 文件夹中带后缀的模型名称统一替换为 glm-5.1
+# 处理 glm-5.1 和 gpt-5.x-xxx 格式的模型名称
 
 SKILLS_DIR="/home/tiger/.claude/skills"
 
-# 定义替换规则：将 glm-5.1, glm-5.1, glm-5.1, glm-5.1, glm-5.1, glm-5.1 等替换为 glm-5.1
-# 使用 sed 进行替换
-
-echo "开始替换 gpt-5.x 模型名称为 glm-5.1..."
+echo "开始修复带后缀的模型名称..."
 echo ""
 
-# 查找所有包含 gpt-5.x 的文件并进行替换
+# 查找所有包含 glm-5.1 或 gpt-5.x-xxx 的文件并进行替换
 find "$SKILLS_DIR" -type f \( -name "*.md" -o -name "*.py" -o -name "*.json" -o -name "*.yaml" -o -name "*.yml" -o -name "*.sh" -o -name "*.txt" \) | while read -r file; do
-    # 检查文件是否包含 gpt-5.x 模式
-    if grep -qE 'gpt-5\.[0-9]+' "$file" 2>/dev/null; then
+    # 检查文件是否包含需要替换的模式
+    if grep -qE '(glm-5\.1-[a-zA-Z0-9-]+|gpt-5\.[0-9]+-[a-zA-Z0-9-]+)' "$file" 2>/dev/null; then
         echo "处理文件: $file"
-        # 使用 sed 替换 gpt-5.x 为 glm-5.1 (支持 glm-5.1, glm-5.1, glm-5.1, glm-5.1, glm-5.1, glm-5.1 等)
-        sed -i -E 's/gpt-5\.[0-9]+/glm-5.1/g' "$file"
+        # 使用 sed 替换带后缀的模型名称为 glm-5.1
+        sed -i -E 's/(glm-5\.1-[a-zA-Z0-9-]+|gpt-5\.[0-9]+-[a-zA-Z0-9-]+)/glm-5.1/g' "$file"
     fi
 done
 
 echo ""
-echo "替换完成！"
+echo "修复完成！"
 echo ""
-echo "验证替换结果（搜索剩余的 gpt-5.x）:"
-remaining=$(grep -rE 'gpt-5\.[0-9]+' "$SKILLS_DIR" 2>/dev/null | wc -l)
+echo "验证结果（搜索剩余的带后缀模型名称）:"
+remaining=$(grep -rE '(glm-5\.1-[a-zA-Z0-9-]+|gpt-5\.[0-9]+-[a-zA-Z0-9-]+)' "$SKILLS_DIR" 2>/dev/null | wc -l)
 if [ "$remaining" -eq 0 ]; then
-    echo "✓ 所有 gpt-5.x 模型名称已成功替换为 glm-5.1"
+    echo "✓ 所有带后缀的模型名称已统一为 glm-5.1"
 else
-    echo "✗ 还有 $remaining 处 gpt-5.x 未替换:"
-    grep -rE 'gpt-5\.[0-9]+' "$SKILLS_DIR" 2>/dev/null
+    echo "✗ 还有 $remaining 处带后缀的模型名称:"
+    grep -rE '(glm-5\.1-[a-zA-Z0-9-]+|gpt-5\.[0-9]+-[a-zA-Z0-9-]+)' "$SKILLS_DIR" 2>/dev/null
 fi
+
 
 ```
 
