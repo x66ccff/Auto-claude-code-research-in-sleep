@@ -1,387 +1,640 @@
 
-# ARIS: Auto Claude Code Research Skills
+# ARIS
 
-ARIS 是一组面向 AI 辅助科研的 Claude Code / Codex 技能集合。它把文献调研、想法生成、实验实现、自动评审、论文写作、rebuttal 等流程拆成可复用的 `SKILL.md` 工作流，让 AI agent 能在一个项目目录里按步骤推进研究任务。
+ARIS 是一组可安装到 Claude Code / Codex / Cursor 等 agent 工具里的科研工作流技能。
 
-> 简单说：ARIS 不是一个新的平台，而是一套可安装到 Claude Code / Codex / Cursor 等 agent 工具里的研究工作流模板。
-
-## 适合做什么
-
-ARIS 主要适合以下场景：
-
-- 调研某个研究方向，整理已有工作和潜在 gap
-- 基于文献和已有代码生成研究想法
-- 把实验计划落地成可运行代码
-- 自动运行实验、收集结果、分析失败原因
-- 对论文草稿做多轮评审和修改
-- 从实验结果生成论文结构、图表、LaTeX 初稿
-- 根据审稿意见生成 rebuttal 草稿
-- 在项目中沉淀长期研究记忆，例如读过的论文、失败的想法、实验结论
-
-## 核心设计
-
-ARIS 的核心由两部分组成：
-
-1. **执行模型**  
-   通常是 Claude Code、Codex CLI、Cursor、Trae 等负责读写文件、改代码、运行命令的 agent。
-
-2. **评审模型**  
-   通常是 Codex MCP 或其他 LLM，用于做外部评审、挑错、审实验、审论文。  
-   这样可以避免单一模型“自己写、自己审”导致的盲区。
-
-所有技能都是普通 Markdown 文件：
+常见用法：
 
 ```text
-skills/
-  idea-discovery/
-    SKILL.md
-  experiment-bridge/
-    SKILL.md
-  auto-review-loop/
-    SKILL.md
-  paper-writing/
-    SKILL.md
-  rebuttal/
-    SKILL.md
-```
-
-你可以直接阅读、修改、复制这些技能，也可以只安装其中一部分。
-
----
-
-## 功能概览
-
-### 1. Idea Discovery
-
-从一个研究方向出发，自动完成：
-
-- 文献搜索和整理
-- 已有工作的局限分析
-- 研究想法生成
-- 初步 novelty check
-- 可行性评估
-- 输出候选 idea 和后续实验建议
-
-常用命令：
-
-```text
-/idea-discovery "discrete diffusion language models"
-/research-lit "LLM post-training for reasoning"
-/idea-creator "efficient agent training"
-```
-
-### 2. Experiment Bridge
-
-把实验计划转成代码和运行任务：
-
-- 读取实验计划
-- 修改或生成实验脚本
-- 做基本 sanity check
-- 可选：让外部 reviewer 检查实验代码
-- 在本地、远程 GPU 或云 GPU 上启动实验
-- 收集结果并更新实验记录
-
-常用命令：
-
-```text
+/idea-discovery "test-time scaling for LLM agents"
 /experiment-bridge "EXPERIMENT_PLAN.md"
-/run-experiment train.py --lr 1e-4 --epochs 20
-/monitor-experiment
-```
-
-### 3. Auto Review Loop
-
-对论文、实验报告或研究方向做多轮自动评审：
-
-- 外部模型审稿
-- 识别主要问题
-- 自动执行可修复项
-- 必要时补实验
-- 重新评审
-- 输出每轮评分和修改记录
-
-常用命令：
-
-```text
-/auto-review-loop "our method for factorized reasoning"
-/research-review "paper/"
-```
-
-### 4. Paper Writing
-
-从研究叙事和实验结果生成论文草稿：
-
-- 生成 paper outline
-- 建立 claim-evidence matrix
-- 生成图表和表格
-- 编写 LaTeX
-- 编译 PDF
-- 做格式检查和内容改进
-
-常用命令：
-
-```text
+/auto-review-loop "paper/"
 /paper-writing "NARRATIVE_REPORT.md"
-/paper-plan "NARRATIVE_REPORT.md"
-/paper-write
-/paper-compile "paper/"
-```
-
-### 5. Rebuttal
-
-根据审稿意见生成 rebuttal：
-
-- 解析 review
-- 拆分 reviewer concern
-- 制定回应策略
-- 检查是否存在编造、过度承诺、遗漏问题
-- 输出可直接粘贴版本和扩展编辑版本
-
-常用命令：
-
-```text
 /rebuttal "paper/ + reviews.md" — venue: ICML, character limit: 5000
 ```
 
-### 6. Research Wiki
-
-为项目建立长期研究记忆：
-
-- 记录读过的论文
-- 记录 idea 的成功和失败原因
-- 记录实验结果
-- 维护 claim 和 evidence 的关系
-- 避免反复探索已经失败的方向
-
-常用命令：
-
-```text
-/research-wiki init
-/research-wiki stats
-/research-wiki query "diffusion LM"
-```
-
 ---
 
-## 安装前准备
+## 1. 安装
 
-### 必需
-
-- Git
-- Claude Code 或其他支持 `SKILL.md` 的 agent 工具
-- 一个本地项目目录
-
-### 推荐
-
-如果你需要自动评审、论文审稿、rebuttal stress test 等能力，建议安装 Codex CLI 作为 reviewer：
-
-```bash
-npm install -g @openai/codex
-codex setup
-```
-
-然后把 Codex MCP 加到 Claude Code：
-
-```bash
-claude mcp add codex -s user -- codex mcp-server
-```
-
-### 可选
-
-如果你要使用对应功能，还需要：
-
-| 功能 | 依赖 |
-|---|---|
-| 论文 PDF 编译 | LaTeX、latexmk、pdfinfo |
-| AI method figure | Gemini API key 或其他绘图后端 |
-| 远程实验 | SSH 到 GPU 机器 |
-| Vast.ai 租 GPU | vastai CLI 和 Vast.ai API key |
-| Zotero 文献库 | Zotero MCP |
-| Obsidian 笔记库 | Obsidian/MCP vault 工具 |
-
-LaTeX 安装示例：
-
-```bash
-# macOS
-brew install --cask mactex
-brew install poppler
-
-# Ubuntu / Debian
-sudo apt install texlive-full latexmk poppler-utils
-
-# 验证
-latexmk --version
-pdfinfo -v
-```
-
----
-
-## 快速开始
-
-### 1. 克隆 ARIS
-
-建议把 ARIS 克隆到一个稳定位置：
+### 1.1 克隆仓库
 
 ```bash
 git clone https://github.com/wanshuiyin/Auto-claude-code-research-in-sleep.git ~/aris
 ```
 
-### 2. 在你的研究项目里安装技能
-
-进入你的项目目录：
+### 1.2 给当前项目安装 ARIS skills
 
 ```bash
-cd ~/your-research-project
+cd ~/your-project
 bash ~/aris/tools/install_aris.sh
 ```
 
-安装后会在项目中生成类似结构：
+安装后应该能看到：
 
-```text
-your-research-project/
-  .claude/
-    skills/
-      idea-discovery -> ~/aris/skills/idea-discovery
-      experiment-bridge -> ~/aris/skills/experiment-bridge
-      auto-review-loop -> ~/aris/skills/auto-review-loop
-      paper-writing -> ~/aris/skills/paper-writing
-      ...
-  .aris/
-    installed-skills.txt
-  CLAUDE.md
+```bash
+ls .claude/skills
 ```
 
-ARIS 默认采用项目级安装，这样不同项目之间不会互相污染，也不会覆盖你全局的个人技能。
+示例输出：
 
-### 3. 启动 Claude Code
+```text
+idea-discovery
+experiment-bridge
+auto-review-loop
+paper-writing
+rebuttal
+research-lit
+paper-compile
+...
+```
+
+### 1.3 启动 Claude Code
 
 ```bash
 claude
 ```
 
-在 Claude Code 里测试：
+测试：
 
 ```text
-/idea-discovery "your research direction"
+/research-lit "diffusion language models"
 ```
 
 ---
 
-## 常用工作流
+## 2. 最小可用配置
 
-### 从零开始探索一个方向
+在项目根目录新建或修改 `CLAUDE.md`：
 
-```text
-/idea-discovery "efficient test-time scaling for language model agents"
+````markdown
+# Project Config
+
+## Environment
+
+Use Python 3.10.
+
+Activate env:
+
+```bash
+conda activate research
 ```
 
-输出通常包括：
+## Code
 
-- 相关工作总结
-- 研究 gap
-- 候选 idea
-- novelty 风险
-- 可执行实验建议
-- 下一步推荐
+Main code is under:
 
-### 已经有实验计划，开始实现
+```text
+src/
+```
+
+Experiment configs are under:
+
+```text
+configs/
+```
+
+Save runs to:
+
+```text
+runs/
+```
+
+## Paper
+
+Paper source is under:
+
+```text
+paper/
+```
+
+Compile with:
+
+```bash
+cd paper && latexmk -pdf main.tex
+```
+````
+
+---
+
+## 3. Reviewer 配置
+
+ARIS 的 review 类命令通常需要一个 reviewer 后端。推荐用 Codex MCP。
+
+### 3.1 默认 Codex / OpenAI 配置
+
+```bash
+npm install -g @openai/codex
+codex setup
+claude mcp add codex -s user -- codex mcp-server
+```
+
+测试：
+
+```bash
+codex exec "say hello"
+```
+
+Claude Code 内测试：
+
+```text
+/research-review "README.md"
+```
+
+---
+
+## 4. 阿里云百炼 OpenAI 兼容接口
+
+如果用阿里云百炼的 OpenAI 兼容接口作为 reviewer，例如 `glm-5`，建议用旧版 Codex 的 Chat/Completions API。
+
+百炼控制台：
+
+```text
+https://bailian.console.aliyun.com/
+```
+
+### 4.1 安装旧版 Codex
+
+```bash
+npm install -g @openai/codex@0.80.0
+```
+
+检查：
+
+```bash
+codex --version
+```
+
+### 4.2 配置 API Key
+
+```bash
+export OPENAI_API_KEY="your-bailian-api-key"
+```
+
+写入 shell 配置：
+
+```bash
+echo 'export OPENAI_API_KEY="your-bailian-api-key"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+或者 zsh：
+
+```bash
+echo 'export OPENAI_API_KEY="your-bailian-api-key"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+### 4.3 配置 `~/.codex/config.toml`
+
+```bash
+mkdir -p ~/.codex
+vim ~/.codex/config.toml
+```
+
+写入：
+
+```toml
+model_provider = "Model_Studio_Token_Plan"
+model = "glm-5"
+
+[model_providers.Model_Studio_Token_Plan]
+name = "Model_Studio_Token_Plan"
+base_url = "https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
+env_key = "OPENAI_API_KEY"
+wire_api = "chat"
+```
+
+测试：
+
+```bash
+codex exec "用一句话说明你是什么模型"
+```
+
+接入 Claude Code：
+
+```bash
+claude mcp add codex -s user -- codex mcp-server
+```
+
+Claude Code 内测试：
+
+```text
+/research-review "README.md"
+```
+
+### 4.4 禁止 Codex 自动更新
+
+如果你的模型依赖：
+
+```toml
+wire_api = "chat"
+```
+
+建议锁住 Codex 版本，避免自动更新后不能用 Chat/Completions API。
+
+先查看 npm 全局目录：
+
+```bash
+npm root -g
+```
+
+如果路径是：
+
+```text
+/home/tiger/miniforge3/lib/node_modules
+```
+
+锁住 Codex：
+
+```bash
+sudo chown -R root:root /home/tiger/miniforge3/lib/node_modules/@openai/codex
+```
+
+通用写法：
+
+```bash
+sudo chown -R root:root "$(npm root -g)/@openai/codex"
+```
+
+确认还能执行：
+
+```bash
+codex --version
+codex exec "hello"
+```
+
+如果以后要更新 Codex：
+
+```bash
+sudo chown -R "$USER":"$USER" "$(npm root -g)/@openai/codex"
+npm install -g @openai/codex@0.80.0
+```
+
+---
+
+## 5. 常用命令
+
+### 5.1 查文献
+
+```text
+/research-lit "diffusion language models"
+/research-lit "test-time scaling LLM agents"
+/research-lit "multi-agent reinforcement learning for tool use"
+/research-lit "LLM reasoning verification" — sources: local, web
+/research-lit "agent memory benchmark" — sources: web
+```
+
+如果你有本地论文目录：
+
+```bash
+mkdir -p papers
+cp ~/Downloads/*.pdf papers/
+```
+
+然后：
+
+```text
+/research-lit "read local papers about reward model overoptimization" — sources: local
+```
+
+### 5.2 生成研究想法
+
+```text
+/idea-creator "efficient test-time scaling for language model agents"
+/idea-creator "post-training methods for small reasoning models"
+/idea-creator "how to improve long-horizon tool-use agents"
+```
+
+更具体一点：
+
+```text
+/idea-creator "I have a repo that trains ReAct agents on web tasks. Find low-cost ideas that can be tested in 1 day on 1 GPU."
+```
+
+### 5.3 从方向到 idea report
+
+```text
+/idea-discovery "LLM agents that learn from failed tool calls"
+/idea-discovery "efficient verifier-guided reasoning for math LLMs"
+/idea-discovery "memory compression for long-horizon agents"
+```
+
+带参数：
+
+```text
+/idea-discovery "agent memory compression" — effort: lite
+/idea-discovery "agent memory compression" — effort: max
+/idea-discovery "agent memory compression" — sources: local, web
+/idea-discovery "agent memory compression" — human checkpoint: true
+```
+
+### 5.4 检查 novelty
+
+```text
+/novelty-check "Use verifier disagreement as an exploration bonus for test-time search"
+/novelty-check "Train a memory compressor by preserving future tool-call success"
+```
+
+带上下文：
+
+```text
+/novelty-check "Our idea is in IDEA.md. Check whether it is already done in recent LLM agent papers."
+```
+
+### 5.5 写实验计划
+
+```text
+/experiment-plan "IDEA.md"
+/experiment-plan "We want to test whether memory compression preserves task success on WebArena."
+```
+
+建议保存成：
+
+```bash
+touch EXPERIMENT_PLAN.md
+```
+
+最小模板：
+
+```markdown
+# Experiment Plan
+
+## Claim
+
+The proposed method improves task success under the same context budget.
+
+## Baseline
+
+Use the current agent without memory compression.
+
+## Method
+
+Add a memory compressor before each long-horizon planning step.
+
+## Metrics
+
+- task success rate
+- average context length
+- average tool calls
+- cost per successful task
+
+## Runs
+
+| name | config | seeds |
+|---|---|---|
+| baseline | configs/baseline.yaml | 3 |
+| method | configs/memory_compress.yaml | 3 |
+| ablation_no_verifier | configs/no_verifier.yaml | 3 |
+```
+
+然后：
 
 ```text
 /experiment-bridge "EXPERIMENT_PLAN.md"
 ```
 
-建议你的 `EXPERIMENT_PLAN.md` 至少包含：
-
-```markdown
-# Experiment Plan
-
-## Goal
-
-What claim are we testing?
-
-## Baseline
-
-Existing method or codebase.
-
-## Proposed Method
-
-What should be changed?
-
-## Metrics
-
-How to evaluate success.
-
-## Runs
-
-- baseline
-- proposed
-- ablation 1
-- ablation 2
-```
-
-### 自动评审论文或报告
+### 5.6 实现并启动实验
 
 ```text
-/auto-review-loop "focus on method novelty and experiment validity"
+/experiment-bridge "EXPERIMENT_PLAN.md"
+/experiment-bridge "Implement the runs in EXPERIMENT_PLAN.md using the existing training code."
 ```
 
-它会读取当前项目里的论文、实验结果、报告和相关上下文，进行多轮 review 和修复。
+本地 GPU：
 
-### 生成论文草稿
+```text
+/experiment-bridge "EXPERIMENT_PLAN.md" — gpu: local
+```
 
-准备一个 `NARRATIVE_REPORT.md`：
+远程 GPU：
 
-```markdown
+```text
+/experiment-bridge "EXPERIMENT_PLAN.md" — gpu: remote
+```
+
+只做代码，不自动跑：
+
+```text
+/experiment-bridge "EXPERIMENT_PLAN.md" — auto deploy: false
+```
+
+跳过 reviewer 代码审查：
+
+```text
+/experiment-bridge "EXPERIMENT_PLAN.md" — code review: false
+```
+
+### 5.7 单独跑实验
+
+```text
+/run-experiment train.py --config configs/baseline.yaml --seed 1
+/run-experiment train.py --config configs/method.yaml --seed 1
+/run-experiment "python train.py --config configs/baseline.yaml --seed 1"
+```
+
+### 5.8 监控实验
+
+```text
+/monitor-experiment
+/monitor-experiment "runs/2026-05-18_baseline"
+/monitor-experiment "check all running screen sessions on remote GPU"
+```
+
+### 5.9 分析结果
+
+```text
+/analyze-results "runs/"
+/analyze-results "runs/baseline runs/method"
+/analyze-results "Compare method vs baseline on success rate and cost."
+```
+
+---
+
+## 6. Auto Review
+
+### 6.1 审论文
+
+```text
+/research-review "paper/"
+/research-review "paper/main.pdf"
+/research-review "NARRATIVE_REPORT.md"
+```
+
+### 6.2 审实验报告
+
+```text
+/research-review "EXPERIMENT_LOG.md"
+/research-review "runs/summary.md"
+```
+
+### 6.3 多轮自动修改
+
+```text
+/auto-review-loop "paper/"
+/auto-review-loop "NARRATIVE_REPORT.md"
+/auto-review-loop "Focus on novelty, experimental validity, and overclaiming."
+```
+
+带人工确认：
+
+```text
+/auto-review-loop "paper/" — human checkpoint: true
+```
+
+控制强度：
+
+```text
+/auto-review-loop "paper/" — effort: lite
+/auto-review-loop "paper/" — effort: max
+/auto-review-loop "paper/" — effort: beast
+```
+
+限制轮数：
+
+```text
+/auto-review-loop "paper/" — max rounds: 2
+```
+
+---
+
+## 7. 写论文
+
+### 7.1 准备 `NARRATIVE_REPORT.md`
+
+```bash
+cat > NARRATIVE_REPORT.md <<'EOF'
 # Narrative Report
 
 ## Problem
 
-What problem does this work solve?
+Current LLM agents lose useful information when the trajectory becomes long.
 
 ## Method
 
-What is the proposed method?
+We add a memory compressor that keeps information needed for future tool calls.
 
 ## Claims
 
-- Claim 1:
-- Claim 2:
+### C1
+
+The method reduces context length without hurting task success.
+
+### C2
+
+Verifier-guided compression is better than summary-only compression.
 
 ## Evidence
 
-Experiments, metrics, tables, figures.
+- Baseline results: runs/baseline/summary.json
+- Method results: runs/method/summary.json
+- Ablation results: runs/ablation_no_verifier/summary.json
+
+## Figures
+
+- Figure 1: method overview
+- Figure 2: success rate vs context length
+- Table 1: main results
+- Table 2: ablations
 
 ## Limitations
 
-Known limitations and failure cases.
+Tested on one benchmark only.
+No human evaluation yet.
+EOF
 ```
 
-然后运行：
+### 7.2 一条命令生成论文
 
 ```text
 /paper-writing "NARRATIVE_REPORT.md"
 ```
 
-输出通常位于：
+### 7.3 分步骤生成
 
 ```text
-paper/
-  main.tex
-  sections/
-  figures/
-  references.bib
-  main.pdf
+/paper-plan "NARRATIVE_REPORT.md"
+/paper-figure "NARRATIVE_REPORT.md"
+/paper-write "PAPER_PLAN.md"
+/paper-compile "paper/"
 ```
 
-### 处理审稿意见
+### 7.4 指定会议
 
-把 review 保存成 `reviews.md`，然后：
+```text
+/paper-writing "NARRATIVE_REPORT.md" — venue: ICLR
+/paper-writing "NARRATIVE_REPORT.md" — venue: NeurIPS
+/paper-writing "NARRATIVE_REPORT.md" — venue: ICML
+/paper-writing "NARRATIVE_REPORT.md" — venue: ACL
+/paper-writing "NARRATIVE_REPORT.md" — venue: CVPR
+```
+
+### 7.5 不生成 AI 图
+
+```text
+/paper-writing "NARRATIVE_REPORT.md" — illustration: false
+```
+
+### 7.6 使用 Mermaid 图
+
+```text
+/paper-writing "NARRATIVE_REPORT.md" — illustration: mermaid
+```
+
+### 7.7 编译论文
+
+```bash
+cd paper
+latexmk -pdf main.tex
+```
+
+或者：
+
+```text
+/paper-compile "paper/"
+```
+
+---
+
+## 8. Rebuttal
+
+### 8.1 准备 reviews
+
+```bash
+cat > reviews.md <<'EOF'
+# Review 1
+
+The idea is interesting but the experimental comparison is weak.
+
+# Review 2
+
+The method is not clearly distinguished from prior memory summarization methods.
+
+# Review 3
+
+The paper lacks ablations on the verifier component.
+EOF
+```
+
+### 8.2 生成 rebuttal
 
 ```text
 /rebuttal "paper/ + reviews.md" — venue: ICML, character limit: 5000
 ```
 
-输出通常包括：
+### 8.3 只生成策略，不写最终稿
+
+```text
+/rebuttal "paper/ + reviews.md" — venue: ICML, character limit: 5000, quick mode: true
+```
+
+### 8.4 允许补实验
+
+```text
+/rebuttal "paper/ + reviews.md" — venue: ICML, character limit: 5000, auto experiment: true
+```
+
+输出文件一般是：
 
 ```text
 PASTE_READY.txt
@@ -390,124 +643,186 @@ REBUTTAL_DRAFT_rich.md
 
 ---
 
-## 项目配置
+## 9. Research Wiki
 
-建议在项目根目录维护 `CLAUDE.md`，告诉 agent 你的项目约束、环境和实验习惯。
+### 9.1 初始化
 
-示例：
-
-```markdown
-# Project Instructions
-
-## Research Topic
-
-We study efficient reasoning-time scaling for LLM agents.
-
-## Codebase
-
-Main training code is under `src/`.
-Experiment configs are under `configs/`.
-
-## Environment
-
-Use Python 3.10.
-Activate environment with:
-
-```bash
-conda activate research
+```text
+/research-wiki init
 ```
 
-## GPU
+生成：
 
-Use local GPUs by default.
-
-## Logging
-
-Save all experiment outputs to `runs/`.
-Use JSONL logs for metrics.
-
-## Paper
-
-Paper source is under `paper/`.
-Use `latexmk -pdf main.tex` to compile.
+```text
+research-wiki/
 ```
 
-如果你要用远程 GPU，可以写：
+### 9.2 查询
+
+```text
+/research-wiki query "agent memory"
+/research-wiki query "failed ideas about verifier"
+/research-wiki stats
+```
+
+### 9.3 手动记录 idea
+
+```text
+/research-wiki update idea:001 — outcome: failed, reason: "OOM when context length > 64k"
+```
+
+---
+
+## 10. 远程 GPU 配置
+
+在 `CLAUDE.md` 写：
 
 ```markdown
 ## Remote GPU
 
 - gpu: remote
 - SSH: `ssh my-gpu-server`
-- GPU: 4x A100
+- Workdir: `/home/user/projects/my-project`
 - Conda env: `research`
 - Activate: `conda activate research`
-- Code directory: `/home/user/experiments/my-project`
-- Use `screen` or `tmux` for long-running jobs
+- Launcher: use `screen`
+- GPUs: 4x A100
+```
+
+测试 SSH：
+
+```bash
+ssh my-gpu-server "nvidia-smi"
+ssh my-gpu-server "cd /home/user/projects/my-project && pwd"
+```
+
+运行：
+
+```text
+/experiment-bridge "EXPERIMENT_PLAN.md" — gpu: remote
+/monitor-experiment "remote GPU"
 ```
 
 ---
 
-## 常用参数
+## 11. 本地 GPU 配置
 
-多数技能支持在命令后追加参数：
+在 `CLAUDE.md` 写：
 
-```text
-/research-pipeline "topic" — effort: max
-/auto-review-loop "paper/" — human checkpoint: true
-/paper-writing "NARRATIVE_REPORT.md" — venue: NeurIPS
-/research-lit "topic" — sources: local, web
+```markdown
+## Local GPU
+
+- gpu: local
+- Activate: `conda activate research`
+- GPUs: 1x RTX 4090
+- Run directory: `runs/`
 ```
 
-常见参数：
+测试：
 
-| 参数 | 默认值 | 说明 |
-|---|---:|---|
-| `effort` | `balanced` | 工作强度：`lite`、`balanced`、`max`、`beast` |
-| `human checkpoint` | `false` | 是否在关键节点等待人工确认 |
-| `sources` | `all` | 文献来源，例如 `local`、`web`、`zotero` |
-| `venue` | `ICLR` | 论文目标会议或期刊 |
-| `gpu` | `local` | GPU 模式：`local`、`remote`、`vast` |
-| `code review` | `true` | 实验部署前是否做代码评审 |
-| `illustration` | `false` | 是否生成方法图或架构图 |
-| `reviewer` | `codex` | 使用哪个 reviewer 后端 |
+```bash
+nvidia-smi
+python -c "import torch; print(torch.cuda.is_available())"
+```
 
-### effort 级别
+运行：
 
-| 级别 | 适合场景 |
-|---|---|
-| `lite` | 快速探索，节省 token |
-| `balanced` | 默认模式，适合日常使用 |
-| `max` | 投稿前认真打磨 |
-| `beast` | 需要最强审查和最多轮迭代时使用 |
+```text
+/run-experiment "python train.py --config configs/baseline.yaml"
+/monitor-experiment
+```
+
+---
+
+## 12. Vast.ai 配置
+
+安装：
+
+```bash
+pip install vastai
+```
+
+配置 API key：
+
+```bash
+vastai set api-key YOUR_API_KEY
+```
+
+测试：
+
+```bash
+vastai search offers 'gpu_ram>=24 reliability>0.95' -o 'dph+' --limit 3
+```
+
+`CLAUDE.md`：
+
+```markdown
+## Vast.ai
+
+- gpu: vast
+- auto_destroy: true
+- max_budget: 5.00
+```
+
+运行：
+
+```text
+/run-experiment "python train.py --config configs/baseline.yaml" — gpu: vast
+```
+
+---
+
+## 13. 常用参数
+
+```text
+— effort: lite
+— effort: balanced
+— effort: max
+— effort: beast
+```
+
+```text
+— human checkpoint: true
+— code review: false
+— auto deploy: false
+— gpu: local
+— gpu: remote
+— gpu: vast
+— venue: NeurIPS
+— illustration: false
+— illustration: mermaid
+— sources: local, web
+```
 
 示例：
 
 ```text
-/idea-discovery "LLM agent memory" — effort: lite
-/paper-writing "NARRATIVE_REPORT.md" — effort: max
+/idea-discovery "agent memory" — effort: lite
+/idea-discovery "agent memory" — effort: max, sources: local, web
+/experiment-bridge "EXPERIMENT_PLAN.md" — gpu: remote, code review: true
 /auto-review-loop "paper/" — effort: beast, human checkpoint: true
+/paper-writing "NARRATIVE_REPORT.md" — venue: NeurIPS, illustration: false
 ```
 
 ---
 
-## 更新 ARIS
+## 14. 更新
 
-如果你使用项目级 symlink 安装，更新 ARIS 本体即可：
+更新 ARIS：
 
 ```bash
 cd ~/aris
 git pull
 ```
 
-如果上游新增或删除了技能，需要在项目目录重新 reconcile：
+如果新技能没有出现在项目里：
 
 ```bash
-cd ~/your-research-project
+cd ~/your-project
 bash ~/aris/tools/install_aris.sh
 ```
 
-查看安装计划但不实际执行：
+查看会改什么：
 
 ```bash
 bash ~/aris/tools/install_aris.sh --dry-run
@@ -515,284 +830,167 @@ bash ~/aris/tools/install_aris.sh --dry-run
 
 ---
 
-## 卸载
-
-在项目目录中执行：
+## 15. 卸载
 
 ```bash
+cd ~/your-project
 bash ~/aris/tools/install_aris.sh --uninstall
 ```
 
-卸载只会删除 ARIS 管理的技能链接，不会删除你的项目文件，也不会删除你自己的 `.claude/skills` 内容。
-
----
-
-## 可选集成
-
-### Codex Reviewer
-
-用于外部评审、论文审稿、代码审查等：
+确认：
 
 ```bash
-npm install -g @openai/codex
-codex setup
-claude mcp add codex -s user -- codex mcp-server
+ls .claude/skills
 ```
-
-### Zotero
-
-如果你用 Zotero 管理文献，可以接入 Zotero MCP，让 `/research-lit` 优先搜索你的个人文献库。
-
-典型能力：
-
-- 搜索本地文献
-- 读取 annotation
-- 导出 BibTeX
-- 结合 web search 做补充调研
-
-### Obsidian
-
-如果你用 Obsidian 管理研究笔记，可以接入 vault 搜索，让 ARIS 在生成 idea 前读取你的历史笔记。
-
-### Feishu / Lark 通知
-
-如果你希望长时间任务完成后收到通知，可以配置 Feishu webhook。  
-这是可选功能，不配置不会影响任何核心工作流。
-
-### Vast.ai
-
-如果没有固定 GPU，可以配置 Vast.ai，按需租用 GPU 执行实验。  
-建议先手动熟悉 Vast.ai 的计费和实例销毁逻辑，再让 agent 自动操作。
 
 ---
 
-## 目录结构
+## 16. 常见问题
 
-仓库主要目录：
+### Claude Code 看不到命令
 
-```text
-.
-├── skills/                  # Claude Code / Codex 技能
-├── tools/                   # 安装、更新、辅助脚本
-├── templates/               # 输入模板
-├── docs/                    # 详细文档
-├── mcp-servers/             # 可选 MCP server
-├── community_papers/        # 社区示例材料
-└── README.md
-```
-
-常用文件：
-
-| 文件或目录 | 说明 |
-|---|---|
-| `skills/*/SKILL.md` | 每个技能的主说明 |
-| `tools/install_aris.sh` | 项目级安装脚本 |
-| `tools/smart_update.sh` | 复制式安装时的更新工具 |
-| `templates/` | research brief、experiment plan、paper plan 等模板 |
-| `docs/` | 平台适配和进阶配置文档 |
-
----
-
-## 输入模板
-
-建议从模板开始，而不是只给一句很宽泛的 prompt。
-
-常见模板：
-
-```text
-templates/
-  RESEARCH_BRIEF_TEMPLATE.md
-  EXPERIMENT_PLAN_TEMPLATE.md
-  NARRATIVE_REPORT_TEMPLATE.md
-  PAPER_PLAN_TEMPLATE.md
-```
-
-典型使用方式：
+检查：
 
 ```bash
-cp ~/aris/templates/RESEARCH_BRIEF_TEMPLATE.md RESEARCH_BRIEF.md
-cp ~/aris/templates/NARRATIVE_REPORT_TEMPLATE.md NARRATIVE_REPORT.md
+ls .claude/skills
+find .claude/skills -maxdepth 2 -name SKILL.md | head
 ```
 
-然后在 Claude Code 中运行：
+重新安装：
 
-```text
-/idea-discovery "read RESEARCH_BRIEF.md"
-/paper-writing "NARRATIVE_REPORT.md"
+```bash
+bash ~/aris/tools/install_aris.sh
 ```
 
----
-
-## 最佳实践
-
-### 1. 把研究上下文写进文件
-
-不要只依赖聊天上下文。建议维护：
-
-```text
-RESEARCH_BRIEF.md
-EXPERIMENT_PLAN.md
-NARRATIVE_REPORT.md
-EXPERIMENT_LOG.md
-CLAIMS.md
-```
-
-这样 agent 断线、重启或压缩上下文后仍能恢复。
-
-### 2. 每个实验都保存配置和结果
-
-建议统一结构：
-
-```text
-runs/
-  2026-05-18_baseline/
-    config.yaml
-    metrics.jsonl
-    stdout.log
-    summary.md
-  2026-05-18_method_a/
-    config.yaml
-    metrics.jsonl
-    stdout.log
-    summary.md
-```
-
-### 3. 不要让 agent 编造结果
-
-论文写作前，确保所有 claim 都能对应到实际结果文件。  
-如果没有数据，让 agent 标记为 `DATA_NEEDED`，不要生成看似真实的数字。
-
-### 4. 投稿前人工检查
-
-ARIS 可以提高效率，但不能替代作者判断。投稿前至少人工检查：
-
-- 数字是否来自真实实验
-- 引用是否真实且上下文正确
-- 代码是否能复现关键结果
-- 图表是否和结果文件一致
-- 贡献表述是否过度
-- limitation 是否诚实
-
-### 5. 高风险操作前加 human checkpoint
-
-例如：
-
-```text
-/research-pipeline "topic" — human checkpoint: true
-/auto-review-loop "paper/" — human checkpoint: true
-```
-
-适合在以下节点人工确认：
-
-- 选择最终 idea
-- 启动大规模 GPU 实验
-- 修改论文核心 claim
-- 生成 rebuttal 承诺
-- 推送代码或覆盖文件
-
----
-
-## 常见问题
-
-### Claude Code 里看不到 slash command 怎么办？
-
-确认技能是否安装到项目的：
-
-```text
-.claude/skills/<skill-name>/SKILL.md
-```
-
-如果你之前使用了旧的嵌套安装方式，重新运行：
+旧安装迁移：
 
 ```bash
 bash ~/aris/tools/install_aris.sh --from-old
 ```
 
-### `git pull` 后新技能没出现怎么办？
+### Codex 不通
 
-项目级安装采用一个技能一个 symlink。  
-新增技能需要重新运行安装脚本：
+检查版本：
 
 ```bash
-cd ~/your-research-project
-bash ~/aris/tools/install_aris.sh
+codex --version
 ```
 
-### 不装 Codex 能不能用？
+检查 API key：
 
-可以使用部分功能，例如读写文件、整理文档、生成计划。  
-但自动评审、外部审稿、对抗性检查等能力会受限。
+```bash
+echo $OPENAI_API_KEY
+```
 
-推荐至少配置一个 reviewer 后端，例如 Codex MCP 或其他 OpenAI-compatible MCP。
+测试：
 
-### 不写论文，只做实验可以吗？
+```bash
+codex exec "hello"
+```
 
-可以。常用组合是：
+重新添加 MCP：
+
+```bash
+claude mcp add codex -s user -- codex mcp-server
+```
+
+### 百炼接口不通
+
+检查配置：
+
+```bash
+cat ~/.codex/config.toml
+```
+
+应包含：
+
+```toml
+wire_api = "chat"
+```
+
+检查 Codex 版本：
+
+```bash
+codex --version
+```
+
+如果新版不兼容：
+
+```bash
+npm install -g @openai/codex@0.80.0
+```
+
+### 防止 Codex 被更新
+
+```bash
+sudo chown -R root:root "$(npm root -g)/@openai/codex"
+```
+
+验证：
+
+```bash
+codex --version
+codex exec "hello"
+```
+
+### LaTeX 编译失败
+
+手动看错误：
+
+```bash
+cd paper
+latexmk -pdf main.tex
+```
+
+让 agent 修：
 
 ```text
-/idea-discovery
-/experiment-bridge
-/run-experiment
-/monitor-experiment
-/analyze-results
+/paper-compile "paper/"
 ```
 
-### 没有 GPU 可以用吗？
-
-可以。  
-没有 GPU 时，ARIS 仍然能做文献调研、idea 生成、代码修改、论文写作和 rebuttal。  
-涉及实验运行的步骤会跳过、请求远程 GPU，或使用你配置的云 GPU。
-
-### 生成的论文能直接投稿吗？
-
-不建议不经人工检查直接投稿。  
-ARIS 可以生成结构化草稿和做多轮审查，但作者仍然需要负责真实性、贡献边界、实验有效性和引用准确性。
-
----
-
-## 贡献
-
-欢迎提交：
-
-- 新技能
-- 现有技能改进
-- 文档修正
-- 平台适配
-- bug report
-- 使用案例
-
-新增技能通常放在：
+### 实验跑挂了
 
 ```text
-skills/your-skill-name/SKILL.md
+/monitor-experiment "runs/"
+/analyze-results "runs/"
 ```
 
-建议每个技能说明清楚：
+让 agent 看日志：
 
-- 适用场景
-- 输入格式
-- 输出文件
-- 执行步骤
-- 安全限制
-- 失败时如何恢复
-
----
-
-## Citation
-
-如果你在研究中使用 ARIS，可以引用：
-
-```bibtex
-@article{yang2026aris,
-  title={ARIS: Autonomous Research via Adversarial Multi-Agent Collaboration},
-  author={Yang, Ruofeng and Li, Yongcan and Li, Shuai},
-  journal={arXiv preprint arXiv:2605.03042},
-  year={2026}
-}
+```text
+/experiment-bridge "Read the failed logs under runs/ and patch the training script."
 ```
 
 ---
 
-## License
+## 17. 推荐项目文件结构
 
-MIT
+```text
+your-project/
+  CLAUDE.md
+  RESEARCH_BRIEF.md
+  IDEA.md
+  EXPERIMENT_PLAN.md
+  NARRATIVE_REPORT.md
+  reviews.md
+
+  src/
+  configs/
+  scripts/
+
+  runs/
+    baseline/
+    method/
+    ablation/
+
+  paper/
+    main.tex
+    sections/
+    figures/
+    references.bib
+
+  .claude/
+    skills/
+
+  .aris/
+```
